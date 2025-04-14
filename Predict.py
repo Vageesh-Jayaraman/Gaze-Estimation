@@ -11,9 +11,7 @@ st.title("Predict Gaze Direction")
 model = load_model()
 
 mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1, refine_landmarks=True)
-mp_drawing = mp.solutions.drawing_utils
-drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, refine_landmarks=True)
 
 LEFT_EYE_INDICES = [33, 133, 160, 158, 144, 145, 153, 154, 155]
 RIGHT_EYE_INDICES = [263, 362, 387, 385, 373, 374, 380, 381, 382]
@@ -43,80 +41,64 @@ def crop_eye(frame, landmarks, indices, padding_ratio=0.5, target_size=(120, 80)
     return cropped_resized
 
 def preprocess_eye(img):
-    try:
-        img = tf.keras.preprocessing.image.img_to_array(img)
-        return img
-    except Exception as e:
-        st.warning(f"Preprocessing error: {e}")
-        return None
-
-def get_eye_center(landmarks, indices, w, h):
-    x = int(np.mean([landmarks.landmark[i].x for i in indices]) * w)
-    y = int(np.mean([landmarks.landmark[i].y for i in indices]) * h)
-    return (x, y)
+    img = tf.keras.preprocessing.image.img_to_array(img)
+    return img
 
 def normalize_vector(v):
     norm = np.linalg.norm(v)
     return v / norm if norm > 0 else v
 
-stframe = st.empty()
-predictions_box = st.empty()
+# Streamlit camera input
+uploaded_image = st.camera_input("Take a photo to predict gaze direction")
 
-cap = cv2.VideoCapture(0)
+if uploaded_image is not None:
+    # Convert the uploaded image to OpenCV format
+    file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
+    frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        st.error("Failed to grab frame from webcam.")
-        break
-
-    frame = cv2.flip(frame, 1)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = face_mesh.process(rgb_frame)
 
     if results.multi_face_landmarks:
         face_landmarks = results.multi_face_landmarks[0]
 
-        left_eye_img = crop_eye(frame, face_landmarks, LEFT_EYE_INDICES, padding_ratio=0.5)
-        right_eye_img = crop_eye(frame, face_landmarks, RIGHT_EYE_INDICES, padding_ratio=0.5)
+        left_eye_img = crop_eye(frame, face_landmarks, LEFT_EYE_INDICES)
+        right_eye_img = crop_eye(frame, face_landmarks, RIGHT_EYE_INDICES)
 
-        left_eye_img = cv2.cvtColor(left_eye_img, cv2.COLOR_BGR2RGB)
-        right_eye_img = cv2.cvtColor(right_eye_img, cv2.COLOR_BGR2RGB)
+        left_eye_img_rgb = cv2.cvtColor(left_eye_img, cv2.COLOR_BGR2RGB)
+        right_eye_img_rgb = cv2.cvtColor(right_eye_img, cv2.COLOR_BGR2RGB)
 
-        if left_eye_img.size > 0 and right_eye_img.size > 0:
-            pre_left = preprocess_eye(left_eye_img)
-            pre_right = preprocess_eye(right_eye_img)
+        pre_left = preprocess_eye(left_eye_img_rgb)
+        pre_right = preprocess_eye(right_eye_img_rgb)
 
-            if pre_left is not None and pre_right is not None:
-                left_pred = model.predict(np.expand_dims(pre_left, axis=0))[0]
-                right_pred = model.predict(np.expand_dims(pre_right, axis=0))[0]
+        left_pred = model.predict(np.expand_dims(pre_left, axis=0))[0]
+        right_pred = model.predict(np.expand_dims(pre_right, axis=0))[0]
 
-                predictions_box.markdown(f"""
-                ### Gaze Predictions  
-                - **Left Eye**: `{np.round(left_pred, 2)}`  
-                - **Right Eye**: `{np.round(right_pred, 2)}`
-                """)
+        st.markdown(f"""
+        ### Gaze Predictions  
+        - **Left Eye**: `{np.round(left_pred[:2], 2)}`  
+        - **Right Eye**: `{np.round(right_pred[:2], 2)}`
+        """)
 
-                h, w, _ = frame.shape
-                left_center = get_eye_center(face_landmarks, LEFT_EYE_INDICES, w, h)
-                right_center = get_eye_center(face_landmarks, RIGHT_EYE_INDICES, w, h)
+        h, w, _ = frame.shape
 
-                arrow_scale = 50  
+        def get_eye_center(landmarks, indices):
+            x_center = int(np.mean([landmarks.landmark[i].x for i in indices]) * w)
+            y_center = int(np.mean([landmarks.landmark[i].y for i in indices]) * h)
+            return (x_center, y_center)
 
-                left_vector = normalize_vector(left_pred[:2]) * arrow_scale
-                right_vector = normalize_vector(right_pred[:2]) * arrow_scale
+        left_center = get_eye_center(face_landmarks, LEFT_EYE_INDICES)
+        right_center = get_eye_center(face_landmarks, RIGHT_EYE_INDICES)
 
-                left_end = (int(left_center[0] + left_vector[0]), int(left_center[1] + left_vector[1]))
-                right_end = (int(right_center[0] + right_vector[0]), int(right_center[1] + right_vector[1]))
+        arrow_scale = 50  
+        left_vector = normalize_vector(left_pred[:2]) * arrow_scale
+        right_vector = normalize_vector(right_pred[:2]) * arrow_scale
 
-                cv2.arrowedLine(frame, left_center, left_end, (0, 255, 255), 3, tipLength=0.3)
-                cv2.arrowedLine(frame, right_center, right_end, (0, 255, 255), 3, tipLength=0.3)
+        left_end_point = (int(left_center[0] + left_vector[0]), int(left_center[1] + left_vector[1]))
+        right_end_point = (int(right_center[0] + right_vector[0]), int(right_center[1] + right_vector[1]))
 
-                cv2.putText(frame, f"L: {np.round(left_pred, 2)}", (left_center[0] + 10, left_center[1] - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (128, 0, 128), 1)
-                cv2.putText(frame, f"R: {np.round(right_pred, 2)}", (right_center[0] + 10, right_center[1] - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+        cv2.arrowedLine(frame, left_center, left_end_point, (0, 255, 255), thickness=2)
+        cv2.arrowedLine(frame, right_center, right_end_point, (0, 255, 255), thickness=2)
 
-    stframe.image(frame, channels="BGR")
+        st.image(frame[:, :, ::-1], caption="Gaze Direction", use_column_width=True)  
 
-cap.release()

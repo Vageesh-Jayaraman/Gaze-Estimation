@@ -7,11 +7,9 @@ st.set_page_config(page_title="GazeFlow - Model", layout="centered")
 
 st.title("Model Architecture")
 
-# Display model architecture image with larger size
 image = Image.open("Gaze_model.png")
-st.image(image, caption="Gaze Estimation Model Architecture", use_column_width=True)
+st.image(image, caption="Gaze Estimation Model Architecture", use_container_width=True)
 
-# Display clean and well-cased table of model parameters
 st.markdown("### Model Parameters")
 model_info = {
     "Parameter": ["Input Shape", "Optimizer", "Learning Rate", "Loss Function"],
@@ -19,7 +17,6 @@ model_info = {
 }
 st.table(model_info)
 
-# Neatly described Angular Loss Function
 st.markdown("### Angular Loss Function")
 st.markdown("""
 **Angular Loss** combines directional and magnitude-based error into a single metric:
