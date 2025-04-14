@@ -48,11 +48,10 @@ def normalize_vector(v):
     norm = np.linalg.norm(v)
     return v / norm if norm > 0 else v
 
-# Streamlit camera input
+st.info("**Before capturing the photo:**\n- Maximize your screen brightness\n- Come a bit closer to the camera\n- Remove your spectacles for better accuracy")
 uploaded_image = st.camera_input("Take a photo to predict gaze direction")
 
 if uploaded_image is not None:
-    # Convert the uploaded image to OpenCV format
     file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
     frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
@@ -100,5 +99,5 @@ if uploaded_image is not None:
         cv2.arrowedLine(frame, left_center, left_end_point, (0, 255, 255), thickness=2)
         cv2.arrowedLine(frame, right_center, right_end_point, (0, 255, 255), thickness=2)
 
-        st.image(frame[:, :, ::-1], caption="Gaze Direction", use_column_width=True)  
+        st.image(frame[:, :, ::-1], caption="Gaze Direction", use_container_width=True)  
 
