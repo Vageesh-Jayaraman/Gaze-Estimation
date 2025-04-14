@@ -3,3 +3,4 @@ tensorflow
 pillow
 pandas
 numpy
+opencv-python
