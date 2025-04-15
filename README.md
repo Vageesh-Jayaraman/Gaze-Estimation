@@ -12,6 +12,8 @@ Live demo → **[https://gaze-estimation.streamlit.app](https://gaze-estimation.
 <div align="center">
   <img src="https://skillicons.dev/icons?i=tensorflow,opencv" height="50" />
   <img src="https://streamlit.io/images/brand/streamlit-logo-secondary-colormark-darktext.png" height="40" />
+  <img src="https://github.com/user-attachments/assets/d1fd3db5-dee3-4fdf-9bc1-1413f444c8f7" height="50" />
+
 </div>
 
 ---
