@@ -20,6 +20,5 @@ Live demo → **[https://gaze-estimation.streamlit.app](https://gaze-estimation.
 
 ## Architecture
 
-![Gaze_model](https://github.com/user-attachments/assets/cfe21deb-f5c4-4544-9f9c-3ca97bfd3104)
-
+<img src="Gaze_model.png">
 ---
