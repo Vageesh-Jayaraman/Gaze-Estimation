@@ -75,8 +75,8 @@ if uploaded_image is not None:
 
         st.markdown(f"""
         ### Gaze Predictions  
-        - **Left Eye**: `{np.round(left_pred[:2], 2)}`  
-        - **Right Eye**: `{np.round(right_pred[:2], 2)}`
+        - **Left Eye**: `{np.round(left_pred, 2)}`  
+        - **Right Eye**: `{np.round(right_pred, 2)}`
         """)
 
         h, w, _ = frame.shape
