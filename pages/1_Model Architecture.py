@@ -1,9 +1,7 @@
 import streamlit as st
-import tensorflow as tf
 from PIL import Image
 
-st.set_page_config(page_title="GazeFlow - Model", layout="centered")
-
+st.set_page_config(page_title="Gaze Estimation - Model", layout="centered")
 
 st.title("Model Architecture")
 

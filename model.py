@@ -2,9 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.utils import register_keras_serializable
 
-
-
-
+@register_keras_serializable(package="Custom")
 def angular_loss(y_true, y_pred):
     y_true = tf.math.l2_normalize(y_true, axis=1)
     y_pred = tf.math.l2_normalize(y_pred, axis=1)
@@ -94,8 +92,8 @@ class DPG(tf.keras.Model):
         for i in range(4):
             self.dense_blocks.append(DenseBlock())
             if i < 3:
-                current_filters += 32  # growth rate * layers per block
-                transition_filters = int(current_filters * 0.8) # compression factor
+                current_filters += 32  
+                transition_filters = int(current_filters * 0.8) 
                 self.transition_layers.append(TransitionLayer(transition_filters))
                 current_filters = transition_filters
 
